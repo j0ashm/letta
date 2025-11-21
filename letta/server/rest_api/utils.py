@@ -332,7 +332,7 @@ def create_letta_messages_from_llm_response(
             content = []
             if reasoning_content:
                 for content_part in reasoning_content:
-                    if isinstance(content_part, TextContent) and content_part.text == "":
+                    if isinstance(content_part, TextContent) and content_part.text == "" and not content_part.signature:
                         continue
                     content.append(content_part)
 
@@ -352,7 +352,7 @@ def create_letta_messages_from_llm_response(
             content = []
             if reasoning_content:
                 for content_part in reasoning_content:
-                    if isinstance(content_part, TextContent) and content_part.text == "":
+                    if isinstance(content_part, TextContent) and content_part.text == "" and not content_part.signature:
                         continue
                     content.append(content_part)
 
@@ -480,7 +480,7 @@ def create_parallel_tool_messages_from_llm_response(
         ] = []
         if reasoning_content:
             for content_part in reasoning_content:
-                if isinstance(content_part, TextContent) and content_part.text == "":
+                if isinstance(content_part, TextContent) and content_part.text == "" and not content_part.signature:
                     continue
                 content.append(content_part)
 

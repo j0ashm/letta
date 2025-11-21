@@ -520,6 +520,10 @@ class Message(BaseMessage):
                     )
                 )
 
+            elif isinstance(content_part, ToolCallContent):
+                # Tool calls are handled in _convert_tool_call_messages
+                pass
+
             else:
                 logger.warning(f"Unrecognized content part in assistant message: {content_part}")
 
@@ -1750,7 +1754,7 @@ class Message(BaseMessage):
 
             if self.tool_calls is not None:
                 # NOTE: implied support for multiple calls
-                for tool_call in self.tool_calls:
+                for i, tool_call in enumerate(self.tool_calls):
                     function_name = tool_call.function.name
                     function_args = tool_call.function.arguments
                     try:
@@ -1768,18 +1772,34 @@ class Message(BaseMessage):
                     if strip_request_heartbeat:
                         function_args.pop(REQUEST_HEARTBEAT_PARAM, None)
 
-                    parts.append(
-                        {
-                            "functionCall": {
-                                "name": function_name,
-                                "args": function_args,
-                            }
+                    part = {
+                        "functionCall": {
+                            "name": function_name,
+                            "args": function_args,
                         }
-                    )
+                    }
+
+                    # Attach thought signature to the first function call if available
+                    if i == 0 and self.content:
+                        for content in self.content:
+                            if (
+                                (isinstance(content, TextContent) or isinstance(content, ToolCallContent) or isinstance(content, ReasoningContent))
+                                and content.signature
+                                and current_model == self.model
+                            ):
+                                part["thought_signature"] = content.signature
+                                break
+
+                    parts.append(part)
             else:
                 if not native_content:
                     assert text_content is not None
-                    parts.append({"text": text_content})
+                    part = {"text": text_content}
+                    # Check for signature in the single content part
+                    if self.content and len(self.content) == 1 and isinstance(self.content[0], TextContent):
+                        if self.content[0].signature and current_model == self.model:
+                            part["thought_signature"] = self.content[0].signature
+                    parts.append(part)
 
             if self.content and len(self.content) > 1:
                 native_google_content_parts = []

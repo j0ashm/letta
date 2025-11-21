@@ -60,9 +60,14 @@ class LettaLLMRequestAdapter(LettaLLMAdapter):
             ]
         elif self.chat_completions_response.choices[0].message.omitted_reasoning_content:
             self.reasoning_content = [OmittedReasoningContent()]
-        elif self.chat_completions_response.choices[0].message.content:
+        elif self.chat_completions_response.choices[0].message.content or self.chat_completions_response.choices[0].message.reasoning_content_signature:
             # Reasoning placed into content for legacy reasons
-            self.reasoning_content = [TextContent(text=self.chat_completions_response.choices[0].message.content)]
+            self.reasoning_content = [
+                TextContent(
+                    text=self.chat_completions_response.choices[0].message.content or "",
+                    signature=self.chat_completions_response.choices[0].message.reasoning_content_signature,
+                )
+            ]
         else:
             # logger.info("No reasoning content found.")
             self.reasoning_content = None
